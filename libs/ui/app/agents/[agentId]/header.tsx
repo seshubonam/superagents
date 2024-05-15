@@ -108,7 +108,7 @@ export default function Header({
         description: agent.description,
         profile: avatar,
         tags: tags,
-        // category: selectedCategory,
+        category: selectedCategory,
         id: agent.id,
         type: "AGENT",
         publish: publishToMarketplace,
@@ -146,46 +146,6 @@ export default function Header({
       setAvatar(url)
     },
   )
-
-  /*
-      DON'T USE THIS! THIS WILL CRASH YOUR COMPUTER!
-
-        <DialogHeader>
-            <DialogTitle>Category</DialogTitle>
-            <DialogDescription>
-              Enter the category that will be associated with your bot.
-            </DialogDescription>
-          </DialogHeader>
-          <Select
-            onValueChange={(cat) => setCategory(cat)}
-            defaultValue={selectedCategory}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select category..." />
-            </SelectTrigger>
-            <SelectContent>
-              {[
-                {
-                  value: 'fun',
-                  label: 'Fun',
-                }, {
-                  value: 'agi',
-                  label: 'AGI',
-                }, {
-                  value: 'work',
-                  label: 'Work',
-                }
-              ].map((tag) => (
-                <SelectItem
-                  key={tag.value}
-                  value={tag.value}
-                >
-                  {tag.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-  */
 
   return (
     <div className="flex items-center justify-between border-b px-6 py-4">
