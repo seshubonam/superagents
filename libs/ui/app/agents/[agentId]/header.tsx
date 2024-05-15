@@ -33,6 +33,7 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
 import { useEditableField } from "@/components/hooks"
 import Avatar from "./avatar"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 type Mode = "view" | "edit"
 
@@ -43,38 +44,48 @@ export default function Header({
 }: {
   agent: Agent
   profile: Profile
-  email: string | undefined
+  email: String | undefined
 }) {
   const api = new Api(profile.api_key)
   const router = useRouter()
+
   const { toast } = useToast()
 
   const [avatar, setAvatar] = React.useState(agent.avatar || "/logo.png")
+  const [selectedCategory, setCategory] = React.useState(undefined)
+  const [tags, setTags] = React.useState("")
+
   const [isDeleteModalOpen, setDeleteModalOpen] = React.useState<boolean>(false)
   const [preferredBotName, setPreferredBotName] = React.useState("")
-  const [isUsernameAvailable, setUsernameAvailable] = React.useState<boolean | null>(null)
-  const [isCheckingAvailability, setIsCheckingAvailability] = React.useState(false)
-  const [availabilityCheckDone, setAvailabilityCheckDone] = React.useState(false)
+  const [isUsernameAvailable, setUsernameAvailable] = React.useState<
+    boolean | null
+  >(null)
+  const [isCheckingAvailability, setIsCheckingAvailability] =
+    React.useState(false)
+  const [availabilityCheckDone, setAvailabilityCheckDone] =
+    React.useState(false)
   const [publishToMarketplace, setPublishToMarketplace] = React.useState(false)
-  const [tags, setTags] = React.useState("")
 
   const handleCheckUsernameAvailability = async () => {
     setIsCheckingAvailability(true)
     setAvailabilityCheckDone(false)
-    setUsernameAvailable(null)
+    setUsernameAvailable(null) // Reset availability status
 
     try {
       const response = await fetch(
         `https://matrix.pixx.co/_matrix/client/v3/register/available?username=${preferredBotName}`
       )
 
-      if (response.ok) {
+      // Set availability based on response status
+      if (response.status === 200) {
         setUsernameAvailable(true)
-      } else {
+      } else if (response.status === 400) {
         setUsernameAvailable(false)
       }
     } catch (error) {
-      toast({ description: "An error occurred while checking username availability." })
+      toast({
+        description: "An error occurred while checking username availability.",
+      })
     } finally {
       setIsCheckingAvailability(false)
       setAvailabilityCheckDone(true)
@@ -82,12 +93,8 @@ export default function Header({
   }
 
   const handleDeploySubmit = async () => {
-    if (!isUsernameAvailable) {
-      toast({ description: "Please choose an available username." })
-      return
-    }
 
-    const deployUrl = process.env.NEXT_PUBLIC_DEPLOY_URL || "https://bots.pixx.co/add"
+    const deployUrl = `https://bots.pixx.co/add`
     const response = await fetch(deployUrl, {
       method: "POST",
       headers: {
@@ -100,23 +107,31 @@ export default function Header({
         name: agent.name,
         description: agent.description,
         profile: avatar,
-        tags: tags.split(",").map((tag) => tag.trim()),
+        tags: tags,
+        // category: selectedCategory,
         id: agent.id,
         type: "AGENT",
         publish: publishToMarketplace,
       }),
     })
 
+    // Check response and show toast notification accordingly
     if (response.ok) {
-      toast({ description: "Bot deployed successfully!" })
+      toast({
+        description: "Bot deployed successfully!",
+      })
     } else {
-      toast({ description: "Failed to deploy bot. Please try again." })
+      toast({
+        description: "Failed to deploy bot. Please try again.",
+      })
     }
   }
 
   const onAgentDelete = async () => {
     await api.deleteAgentById(agent.id)
-    toast({ description: `Agent with ID: ${agent.id} deleted!` })
+    toast({
+      description: `Agent with ID: ${agent.id} deleted!`,
+    })
     router.refresh()
     router.push("/agents")
   }
@@ -127,11 +142,50 @@ export default function Header({
   }
 
   const handleUpload = React.useCallback(
-    async (url: string) => {
+    async (url: any) => {
       setAvatar(url)
     },
-    []
   )
+
+  /*
+      DON'T USE THIS! THIS WILL CRASH YOUR COMPUTER!
+
+        <DialogHeader>
+            <DialogTitle>Category</DialogTitle>
+            <DialogDescription>
+              Enter the category that will be associated with your bot.
+            </DialogDescription>
+          </DialogHeader>
+          <Select
+            onValueChange={(cat) => setCategory(cat)}
+            defaultValue={selectedCategory}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select category..." />
+            </SelectTrigger>
+            <SelectContent>
+              {[
+                {
+                  value: 'fun',
+                  label: 'Fun',
+                }, {
+                  value: 'agi',
+                  label: 'AGI',
+                }, {
+                  value: 'work',
+                  label: 'Work',
+                }
+              ].map((tag) => (
+                <SelectItem
+                  key={tag.value}
+                  value={tag.value}
+                >
+                  {tag.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+  */
 
   return (
     <div className="flex items-center justify-between border-b px-6 py-4">
@@ -203,13 +257,11 @@ export default function Header({
               Enter your preferred bot name and deploy it.
             </DialogDescription>
           </DialogHeader>
-          <center>
-            <Avatar
-              accept=".jpg, .jpeg, .png, .gif"
-              onSelect={handleUpload}
-              imageUrl={avatar}
-            />
-          </center>
+          <center><Avatar
+            accept=".jpg, .jpeg, .png, .gif"
+            onSelect={handleUpload}
+            imageUrl={avatar}
+          /></center>
           <Input
             value={preferredBotName}
             onChange={(e) => setPreferredBotName(e.target.value)}
